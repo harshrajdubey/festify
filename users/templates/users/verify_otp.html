@@ -1,0 +1,118 @@
+{% extends 'users/base.html' %}
+
+{% block title %}Verify OTP - Festify{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Verify Your Phone</h2>
+    
+    <p class="text-center text-gray-600 mb-6">
+        We've sent a 6-digit verification code to <strong>{{ phone_number }}</strong>
+    </p>
+    
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        <div>
+            <label for="{{ form.otp.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 text-center">Enter OTP</label>
+            {{ form.otp }}
+            {% if form.otp.errors %}
+                <p class="text-red-500 text-xs mt-1 text-center">{{ form.otp.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="text-red-500 text-sm text-center">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
+            Verify OTP
+        </button>
+    </form>
+
+    <div class="text-center mt-4">
+        <p class="text-sm text-gray-600 mb-2">Didn't receive the code?</p>
+        
+        {% if can_resend %}
+            <button id="resend-btn" class="text-blue-600 hover:text-blue-500 text-sm bg-transparent border-none cursor-pointer">
+                Resend OTP
+            </button>
+            <p class="text-xs text-gray-500 mt-1">Attempts: {{ resend_count }}/5</p>
+        {% else %}
+            <p class="text-red-500 text-sm">{{ resend_message }}</p>
+        {% endif %}
+        
+        <div id="resend-message" class="mt-2 hidden"></div>
+        <div id="countdown" class="text-sm text-gray-500 mt-2 hidden"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resendBtn = document.getElementById('resend-btn');
+    const resendMessage = document.getElementById('resend-message');
+    const countdown = document.getElementById('countdown');
+    
+    if (resendBtn) {
+        resendBtn.addEventListener('click', function() {
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            resendBtn.classList.add('opacity-50');
+            
+            fetch('{% url "users:resend_otp" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                resendMessage.classList.remove('hidden');
+                
+                if (data.success) {
+                    resendMessage.innerHTML = `<p class="text-green-500 text-sm">${data.message}</p>`;
+                    
+                    // Start 60 second countdown
+                    let seconds = 60;
+                    countdown.classList.remove('hidden');
+                    
+                    const timer = setInterval(() => {
+                        countdown.textContent = `Wait ${seconds} seconds before next resend`;
+                        seconds--;
+                        
+                        if (seconds < 0) {
+                            clearInterval(timer);
+                            countdown.classList.add('hidden');
+                            resendBtn.disabled = false;
+                            resendBtn.textContent = 'Resend OTP';
+                            resendBtn.classList.remove('opacity-50');
+                            
+                            // Update attempt count
+                            const attemptText = document.querySelector('.text-xs.text-gray-500');
+                            if (attemptText) {
+                                attemptText.textContent = `Attempts: ${data.resend_count}/5`;
+                            }
+                        }
+                    }, 1000);
+                    
+                } else {
+                    resendMessage.innerHTML = `<p class="text-red-500 text-sm">${data.message}</p>`;
+                    resendBtn.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resendMessage.classList.remove('hidden');
+                resendMessage.innerHTML = '<p class="text-red-500 text-sm">Error sending OTP. Please try again.</p>';
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend OTP';
+                resendBtn.classList.remove('opacity-50');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

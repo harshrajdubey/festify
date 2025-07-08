@@ -1,0 +1,53 @@
+{% extends 'users/base.html' %}
+
+{% block title %}{{ user.username }} - Festify{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Welcome, {{ user.username }}!</h2>
+        <a href="{% url 'users:logout' %}" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-200">
+            Logout
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Account Information</h3>
+            <div class="space-y-2">
+                <p><span class="font-medium">Username:</span> {{ user.username }}</p>
+                <p><span class="font-medium">Email:</span> {{ user.email }}</p>
+                <p><span class="font-medium">Phone:</span> {{ user.phone_number }}</p>
+                <p><span class="font-medium">Member since:</span> {{ user.created_at|date:"F d, Y" }}</p>
+            </div>
+        </div>
+        
+        <div class="bg-green-50 p-4 rounded-lg">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Verification Status</h3>
+            <div class="space-y-2">
+                <p class="flex items-center">
+                    <span class="font-medium">Phone Verified:</span>
+                    {% if user.phone_verified %}
+                        <span class="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">✓ Verified</span>
+                    {% else %}
+                        <span class="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">✗ Not Verified</span>
+                    {% endif %}
+                </p>
+                <p class="flex items-center">
+                    <span class="font-medium">Email Verified:</span>
+                    {% if user.email_verified %}
+                        <span class="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">✓ Verified</span>
+                    {% else %}
+                        <span class="ml-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">⏳ Pending</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-8 text-center">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Your Templates</h3>
+        <p class="text-gray-600">Template creation and management coming soon...</p>
+    </div>
+</div>
+{% endblock %}
